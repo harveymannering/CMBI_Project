@@ -1,6 +1,7 @@
+clear all;
 cd D:\Download\connectomes-data\Task2Data
 
-% Based on Harvey's code
+% Based on Harvey's previous code
 
 % Load csv files
 s = zeros(68, 68, 19);
@@ -59,6 +60,30 @@ end
 aic1 = 2*3 + 19.*log(model1_sum.*1/19);
 bic1 = 3*log(19) + 19.*log(model1_sum.*1/19);
 
+cv_sum1 = 0;
+for cv = 1:19
+    f_test = f(:,:,cv);
+    f_train = f(:,:,[1:cv-1,cv+1:19]);
+    s_test = s(:,:,cv);
+    s_train = s(:,:,[1:cv-1,cv+1:19]);
+    
+    cv_alpha1 = zeros(size(s,1),size(s,2));
+    cv_beta1 = zeros(size(s,1),size(s,2));
+    
+    for m = 1:1:size(s, 1)
+        for n = 1:size(s, 2)
+            cv_X1 = [ones(18, 1) reshape(s_train(m,n,:), 18, 1)];
+            cv_Y1 = reshape(f_train(m,n,:), 18, 1);
+            cv_coeff1 = pinv(cv_X1' * cv_X1) * cv_X1' * cv_Y1;
+            cv_alpha1(i,j) = cv_coeff1(1);
+            cv_beta1(i,j) = cv_coeff1(2);
+        end
+    end
+    cv_res1 = f_test - (cv_alpha1 + cv_beta1.*s_test);
+    cv_sum1 = cv_sum1 + cv_res1.^2;
+end
+
+
 %% model 2
 alpha2 = zeros(size(s,1),size(s,2)); % 68 x 68
 beta2 = zeros(size(s,1),size(s,2)); % 68 x 68
@@ -89,6 +114,32 @@ end
 aic2 = 2*4 + 19.*log(model2_sum./19);
 bic2 = 4*log(19) + 19.*log(model2_sum./19);
 
+cv_sum2 = 0;
+for cv = 1:19
+    f_test = f(:,:,cv);
+    f_train = f(:,:,[1:cv-1,cv+1:19]);
+    s_test = s(:,:,cv);
+    s_train = s(:,:,[1:cv-1,cv+1:19]);
+    
+    cv_alpha2 = zeros(size(s,1),size(s,2)); 
+    cv_beta2 = zeros(size(s,1),size(s,2)); 
+    cv_y2 = zeros(size(s,1),size(s,2)); 
+    
+    for m = 1:1:size(s, 1)
+        for n = 1:size(s, 2)
+            cv_s_slice2 = reshape(s_train(m,n,:), 18, 1);
+            cv_X2 = [ones(18, 1) cv_s_slice2 (cv_s_slice2.^2)];
+            cv_Y2 = reshape(f_train(m,n,:), 18, 1);
+            cv_coeff2 = pinv(cv_X2' * cv_X2) * cv_X2' * cv_Y2;
+            cv_alpha2(m,n) = cv_coeff2(1);
+            cv_beta2(m,n) = cv_coeff2(2);
+            cv_y2(m,n) = cv_coeff2(3);
+        end
+    end
+    cv_res2 = f_test - (cv_alpha2 + cv_beta2.*s_test + cv_y2.*s_test.^2);
+    cv_sum2 = cv_sum2 + cv_res2.^2;
+end
+
 %% model 3
 alpha3 = zeros(size(s,1),size(s,2)); % 68 x 68
 beta3 = zeros(size(s,1),size(s,2)); % 68 x 68
@@ -101,7 +152,7 @@ for i = 1:size(s, 1)
         Y = reshape(f(i,j,:), 19, 1);
 
         % Solve for the alpha and beta coefficients
-        coeff = pinv(X' * X) * X' * Y;
+        coeff = inv(X' * X) * X' * Y;
         alpha3(i,j) = coeff(1);
         beta3(i,j) = coeff(2);
     end
@@ -113,7 +164,7 @@ for k = 1:19
     model3_sum = model3_sum + res3.^2;
 end
 
-aic3 = 2*3 + 19.* log(mod3_sum./19);
+aic3 = 2*3 + 19.* log(model3_sum./19);
 bic3 = 3*log(19) + 19.*log(model3_sum./19);
 
 %% model 4
@@ -130,7 +181,7 @@ for i = 1:size(s, 1)
         Y = reshape(f(i,j,:), 19, 1);
 
         % Solve for the alpha and beta coefficients
-        coeff = pinv(X' * X) * X' * Y;
+        coeff = inv(X' * X) * X' * Y;
         alpha4(i,j) = coeff(1);
         beta4(i,j) = coeff(2);
         y4(i,j) = coeff(3);
@@ -143,7 +194,7 @@ for k = 1:19
     model4_sum = model4_sum + res4.^2;
 end
 
-aic4 = 2*4 + 19.* log(mod4_sum./19);
+aic4 = 2*4 + 19.* log(model4_sum./19);
 bic4 = 4*log(19) + 19.*log(model4_sum./19);
 
 %% model 5
@@ -159,7 +210,7 @@ for i = 1:size(s, 1)
         Y = reshape(f(i,j,:), 19, 1);
 
         % Solve for the alpha and beta coefficients
-        coeff = pinv(X' * X) * X' * Y;
+        coeff = inv(X' * X) * X' * Y;
         alpha5(i,j) = coeff(1);
         beta5(i,j) = coeff(2);
         y5(i,j) = coeff(3);
@@ -172,88 +223,5 @@ for k = 1:19
     model5_sum = model5_sum + res5.^2;
 end
 
-aic5 = 2*4 + 19.* log(mod5_sum./19);
+aic5 = 2*4 + 19.* log(model5_sum./19);
 bic5 = 4*log(19) + 19.*log(model5_sum./19);
-
-
-% The following is my previous code
-% %  indirect structural connectivity matrix
-% str_data_dir = dir('*_WFA_68.csv');
-% f_data_dir = dir('*_rsfMRI_68.csv');
-% for t = 1:size(f_data_dir,1) 
-%     f_data{t} = readmatrix(f_data_dir(t).name);
-% end
-% 
-% for t = 1:size(str_data_dir,1) 
-%     s_matrix = readmatrix(str_data_dir(t).name);
-%     str_data{t} = s_matrix;
-%     len = length(s_matrix);
-%     t_matrix = zeros(len);
-%     
-%     for i = 1:len
-%         for j = 1:len 
-%             
-%             min_list = [];
-%             for k = 1:len
-%                 if s_matrix(i,k)~=0 && s_matrix(k,j)~=0
-%                     min_list = [min_list, min(s_matrix(i,k),s_matrix(k,j))];
-%                 end
-%             end
-%             
-%             if length(min_list)~=0
-%                 t_matrix(i,j) = max(min_list);  
-%             else
-%                 t_matrix(i,j) = 0;
-%             end
-%         end
-%     end
-%     ind_str_matrix{t} = t_matrix;  
-% end
-% 
-% % Fit the model
-% % model 1
-% alpha{1} = zeros(len);
-% beta{1} = zeros(len);
-% num_measurements{1} = zeros(len);
-% 
-% for i = 1:len
-%     for j = 1:len
-%              
-%         func = [];
-%         structural = [];
-%         
-%         for t = 1:size(f_data,2)
-%             if str_data{t}(i,j) ~= 0
-%                 if f_data{t}(i,j) ~=0
-%                     func(end+1) = f_data{t}(i,j);
-%                     structural(end+1) = str_data{t}(i,j);
-%                 end
-%             end
-%         end
-%         
-%         if length(func) ~=0
-%             veclen = length(structural);
-%             design_mat = [ones(veclen,1),structural'];
-%             X = pinv(design_mat'*design_mat)*design_mat'*func';
-%             alpha{1}(i,j) = X(1);
-%             beta{1}(i,j) = X(2);
-%             num_measurements{1}(i,j) = veclen;
-% 
-%         end
-%         
-%     end
-% end
-% 
-% mod1_sum = zeros(68);
-% for t = 1:19
-%     f_store = f_data{t};
-%     alpha_val = alpha{1};
-%     beta_val = beta{1};
-% 
-%     res = f_store - (alpha_val+beta_val.*str_data{t});
-%     res = (res.^2);
-%     mod1_sum = mod1_sum+res;
-% end
-% 
-% aic{1} = 2*3 + num_measurements{1} .* log ((1/num_measurements{1}).*mod1_sum);
-

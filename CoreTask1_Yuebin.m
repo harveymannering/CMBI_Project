@@ -1,7 +1,9 @@
+close all;
+clear all;
+
 % Add helper functions to path
 addpath('connectomes-data/Toolboxes/2016_01_16_BCT/');
 addpath('connectomes-data/Toolboxes/NIfTI_20140122/');
-addpath('connectomes-data/Toolboxes/covshrink-kpm/');
 
 % Load nii files
 filename = 'connectomes-data/Task1Data/tractor/diffusion/dti_FA.nii.gz';
@@ -63,3 +65,68 @@ for i = 1:8
     mean_cluster_coeff{i} = mean(clustering_coef_bu(struct_connect{i})); 
 end
 
+FA_threshold = [0.1:0.1:0.8];
+density_data = zeros([1,8]);
+mean_shortest_path = zeros([1,8]);
+efficiency_data = zeros([1,8]);
+mean_cluster_coeff_data = zeros([1,8]);
+for i = 1:8
+    density_data(i) = density{i}(1);
+    mean_shortest_path(i) = char_path{i}(1);
+    efficiency_data(i) = efficiency{i};
+    mean_cluster_coeff_data(i) = mean_cluster_coeff{i};
+end
+figure
+hold on 
+plot(FA_threshold,mean_shortest_path)
+hold on 
+plot(FA_threshold,efficiency_data)
+xlabel('FA threshold')
+ylabel('Value')
+legend('mean shortest path','efficiency')
+
+figure
+plot(FA_threshold,density_data)
+hold on 
+plot(FA_threshold,mean_cluster_coeff_data)
+xlabel('FA threshold')
+ylabel('Value')
+legend('edge density','mean clustering coefficient')
+
+% function definition
+% mannually setting lambda
+function [Rhat] = corshrink(x,input_lambda)
+% Eqn on p4 of Schafer and Strimmer 2005
+[n, p] = size(x);
+sx = makeMeanZero(x); sx = makeStdOne(sx); % convert S to R
+[r, vr] = varcov(sx);
+lambda = input_lambda;
+lambda = min(lambda, 1); lambda = max(lambda, 0);
+Rhat = (1-lambda)*r;
+Rhat(logical(eye(p))) = 1;
+end
+
+function [S, VS] = varcov(x)
+% s(i,j) = cov X(i,j)
+% vs(i,j) = est var s(i,j)
+[n,p] = size(x);
+xc = makeMeanZero(x); 
+S = cov(xc);
+XC1 = repmat(reshape(xc', [p 1 n]), [1 p 1]); % size p*p*n !
+XC2 = repmat(reshape(xc', [1 p n]),  [p 1 1]); % size p*p*n !
+VS = var(XC1 .* XC2, 0,  3) * n/((n-1)^2);
+end
+
+function xc = makeMeanZero(x)
+% make column means zero
+[n,p] = size(x);
+m = mean(x);
+xc = x - ones(n, 1)*m; 
+end
+
+function xc = makeStdOne(x)
+% make column  variances one
+[n,p] = size(x);
+sd = ones(n, 1)*std(x);
+xc = x ./ sd; 
+end

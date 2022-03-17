@@ -40,6 +40,10 @@ end
 %% Fit Model 1: f = alpha + beta * s
 
 % Cross validation loop
+best_SSE1 = realmax;
+all_alpha1 = zeros(size(s,1), size(s,2), 19);
+all_beta1 = zeros(size(s,1), size(s,2), 19);
+all_res1 = zeros(size(s,1), size(s,2), 19);
 for c = 1:19
     % Split data into training/validation set
     training_set = s(:,:,1:size(s,3)~=c);
@@ -71,7 +75,15 @@ for c = 1:19
     res1 = validation_set_targets(:,:)-(alpha1+beta1.*validation_set(:,:));
     model1_sum = model1_sum + res1.^2;
     SSE = sum(sum(model1_sum));
-    disp(SSE);
+    %disp(SSE);
+
+    % Save the best model
+    if SSE < best_SSE1
+        best_SSE1 = SSE;
+    end
+    all_alpha1(:,:,c) = alpha1;
+    all_beta1(:,:,c) = beta1;
+    all_res1(:,:,c) = res1;
     
     % Calculate AIC/BIC
     aic1 = 2*3 + 19.*log(model1_sum.*1/19);
@@ -81,6 +93,10 @@ end
 
 %% Fit Model 2: f = alpha + beta * s + y * s^2
 % Cross validation loop
+best_SSE2 = realmax;
+best_alpha2 = zeros(size(s,1), size(s,2));
+best_beta2 = zeros(size(s,1), size(s,2));
+best_y2 = zeros(size(s,1), size(s,2));
 for c = 1:19
     % Split data into training/validation set
     training_set = s(:,:,1:size(s,3)~=c);
@@ -115,6 +131,14 @@ for c = 1:19
     SSE = sum(sum(model2_sum));
     %disp(SSE);
 
+    % Save the best model
+    if SSE < best_SSE2
+        best_SSE2 = SSE;
+        best_alpha2 = alpha2;
+        best_beta2 = beta2;
+        best_y2 = y2;
+    end
+
     aic2 = 2*4 + 19.*log(model2_sum./19);
     bic2 = 4*log(19) + 19.*log(model2_sum./19);
 
@@ -122,6 +146,9 @@ end
 
 %% Fit Model 3: f = alpha + beta * t
 % Cross validation loop
+best_SSE3 = realmax;
+best_alpha3 = zeros(size(s,1), size(s,2));
+best_beta3 = zeros(size(s,1), size(s,2));
 for c = 1:19
     % Split data into training/validation set
     training_set = t(:,:,1:size(t,3)~=c);
@@ -158,6 +185,13 @@ for c = 1:19
     model3_sum(isinf(model3_sum)) = 0; % Set inifity values to zeros 
     SSE = sum(sum(model3_sum));
     %disp(SSE);
+
+    % Save the best model
+    if SSE < best_SSE3
+        best_SSE3 = SSE;
+        best_alpha3 = alpha3;
+        best_beta3 = beta3;
+    end
     
     aic3 = 2*3 + 19.* log(model3_sum./19);
     bic3 = 3*log(19) + 19.*log(model3_sum./19);
@@ -165,6 +199,10 @@ end
 
 %% Fit Model 4: f = alpha + beta * t + y * t^2
 % Cross validation loop
+best_SSE4 = realmax;
+best_alpha4 = zeros(size(s,1), size(s,2));
+best_beta4 = zeros(size(s,1), size(s,2));
+best_y4 = zeros(size(s,1), size(s,2));
 for c = 1:19
     % Split data into training/validation set
     training_set = t(:,:,1:size(t,3)~=c);
@@ -207,6 +245,14 @@ for c = 1:19
     SSE = sum(sum(model4_sum));
     %disp(SSE);
 
+    % Save the best model
+    if SSE < best_SSE4
+        best_SSE4 = SSE;
+        best_alpha4 = alpha4;
+        best_beta4 = beta4;
+        best_y4 = y4;
+    end
+
     % AIC/BIC calculation
     aic4 = 2*4 + 19.* log(model4_sum./19);
     bic4 = 4*log(19) + 19.*log(model4_sum./19);
@@ -216,6 +262,9 @@ end
 
 %% Fit Model 5: f = alpha + beta * s + y * t
 % Cross validation loop
+best_SSE5 = realmax;
+best_alpha5 = zeros(size(s,1), size(s,2));
+best_beta5 = zeros(size(s,1), size(s,2));
 for c = 1:19
     % Split data into training/validation set
     training_set_s = s(:,:,1:size(t,3)~=c);
@@ -257,9 +306,53 @@ for c = 1:19
     model5_sum(isnan(model5_sum)) = 0; % Set NaN values to zeros again 
     model5_sum(isinf(model5_sum)) = 0; % Set inifity values to zeros 
     SSE = sum(sum(model5_sum));
-    disp(SSE);
+    %disp(SSE);
     
-    
+    % Save the best model
+    if SSE < best_SSE5
+        best_SSE5 = SSE;
+        best_alpha5 = alpha5;
+        best_beta5 = beta5;
+    end
+
+    % AIC/BIC
     aic5 = 2*4 + 19.* log(model5_sum./19);
     bic5 = 4*log(19) + 19.*log(model5_sum./19);
 end
+
+disp("Model 1 :" + best_SSE1)
+disp("Model 2 :" + best_SSE2)
+disp("Model 3 :" + best_SSE3)
+disp("Model 4 :" + best_SSE4)
+disp("Model 5 :" + best_SSE5)
+
+% Plot variance of parameters for the best model (Model 1)
+subplot(2,3,1);
+imshow(var(all_alpha1,0,3) / max(max(var(all_alpha1,0,3))));
+title("Alpha Variance");
+subplot(2,3,2);
+imshow(var(all_beta1,0,3) / max(max(var(all_beta1,0,3))));
+title("Beta Variance");
+% Plot the average sum of square error for the best model (Model 1)
+subplot(2,3,3);
+imshow(mean(all_res1,3) / max(max(mean(all_res1,3))));
+title("Performance");
+
+% Plot variance of parameters for the best model (Model 1)
+subplot(2,3,4);
+zoom_start_x = 20;
+zoom_end_x = 30;
+zoom_start_y = 10;
+zoom_end_y = 20;
+imshow(var(all_alpha1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),0,3) / max(max(var(all_alpha1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),0,3))));
+title("Zoomed Alpha Variance");
+subplot(2,3,5);
+imshow(var(all_beta1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),0,3) / max(max(var(all_beta1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),0,3))));
+title("Zoomed Beta Variance");
+% Plot the average sum of square error for the best model (Model 1)
+subplot(2,3,6);
+imshow(mean(all_res1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),3) / max(max(mean(all_res1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),3))));
+title("Zoomed Performance");
+
+
+

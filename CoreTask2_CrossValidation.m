@@ -44,6 +44,8 @@ best_SSE1 = realmax;
 all_alpha1 = zeros(size(s,1), size(s,2), 19);
 all_beta1 = zeros(size(s,1), size(s,2), 19);
 all_res1 = zeros(size(s,1), size(s,2), 19);
+best_aic1 = 0;
+best_bic1 = 0;
 for c = 1:19
     % Split data into training/validation set
     training_set = s(:,:,1:size(s,3)~=c);
@@ -77,10 +79,6 @@ for c = 1:19
     SSE = sum(sum(model1_sum));
     %disp(SSE);
 
-    % Save the best model
-    if SSE < best_SSE1
-        best_SSE1 = SSE;
-    end
     all_alpha1(:,:,c) = alpha1;
     all_beta1(:,:,c) = beta1;
     all_res1(:,:,c) = res1;
@@ -88,6 +86,13 @@ for c = 1:19
     % Calculate AIC/BIC
     aic1 = 2*3 + 19.*log(model1_sum.*1/19);
     bic1 = 3*log(19) + 19.*log(model1_sum.*1/19);
+
+    % Save the best model
+    if SSE < best_SSE1
+        best_SSE1 = SSE;
+        best_aic1 = mean(mean(aic1));
+        best_bic1 = mean(mean(bic1));
+    end
 
 end
 
@@ -97,6 +102,8 @@ best_SSE2 = realmax;
 best_alpha2 = zeros(size(s,1), size(s,2));
 best_beta2 = zeros(size(s,1), size(s,2));
 best_y2 = zeros(size(s,1), size(s,2));
+best_aic2 = 0;
+best_bic2 = 0;
 for c = 1:19
     % Split data into training/validation set
     training_set = s(:,:,1:size(s,3)~=c);
@@ -131,16 +138,18 @@ for c = 1:19
     SSE = sum(sum(model2_sum));
     %disp(SSE);
 
+    aic2 = 2*4 + 19.*log(model2_sum./19);
+    bic2 = 4*log(19) + 19.*log(model2_sum./19);
+
     % Save the best model
     if SSE < best_SSE2
         best_SSE2 = SSE;
         best_alpha2 = alpha2;
         best_beta2 = beta2;
         best_y2 = y2;
+        best_aic2 = mean(mean(aic2));
+        best_bic2 = mean(mean(bic2));
     end
-
-    aic2 = 2*4 + 19.*log(model2_sum./19);
-    bic2 = 4*log(19) + 19.*log(model2_sum./19);
 
 end
 
@@ -149,6 +158,8 @@ end
 best_SSE3 = realmax;
 best_alpha3 = zeros(size(s,1), size(s,2));
 best_beta3 = zeros(size(s,1), size(s,2));
+best_aic3 = 0;
+best_bic3 = 0;
 for c = 1:19
     % Split data into training/validation set
     training_set = t(:,:,1:size(t,3)~=c);
@@ -175,26 +186,29 @@ for c = 1:19
     
     % There seems to be some NaN values in the alpha3 and beta3 variables,
     % so these need to be set to zero
-    alpha3(isnan(alpha3)) = 0;
-    beta3(isnan(beta3)) = 0;
+    alpha3(isnan(alpha3)) = 1e-100;
+    beta3(isnan(beta3)) = 1e-100;
 
     % Calculate sum of squares
     model3_sum = zeros(68);
     res3 = validation_set_targets(:,:) - (alpha3 + beta3.*validation_set(:,:));
     model3_sum = model3_sum + res3.^2;
-    model3_sum(isinf(model3_sum)) = 0; % Set inifity values to zeros 
+    model3_sum(isinf(model3_sum)) = 1e-100; % Set inifity values to zeros 
     SSE = sum(sum(model3_sum));
     %disp(SSE);
 
-    % Save the best model
+    aic3 = 2*3 + 19.* log(model3_sum./19);
+    bic3 = 3*log(19) + 19.*log(model3_sum./19);
+
+        % Save the best model
     if SSE < best_SSE3
         best_SSE3 = SSE;
         best_alpha3 = alpha3;
         best_beta3 = beta3;
+        best_aic3 = mean(mean(aic3));
+        best_bic3 = mean(mean(bic3));
     end
     
-    aic3 = 2*3 + 19.* log(model3_sum./19);
-    bic3 = 3*log(19) + 19.*log(model3_sum./19);
 end
 
 %% Fit Model 4: f = alpha + beta * t + y * t^2
@@ -203,6 +217,8 @@ best_SSE4 = realmax;
 best_alpha4 = zeros(size(s,1), size(s,2));
 best_beta4 = zeros(size(s,1), size(s,2));
 best_y4 = zeros(size(s,1), size(s,2));
+best_aic4 = 0;
+best_bic4 = 0;
 for c = 1:19
     % Split data into training/validation set
     training_set = t(:,:,1:size(t,3)~=c);
@@ -232,18 +248,22 @@ for c = 1:19
 
     % There seems to be some NaN values in the alpha3 and beta3 variables,
     % so these need to be set to zero
-    alpha4(isnan(alpha4)) = 0;
-    beta4(isnan(beta4)) = 0;
-    y4(isnan(y4)) = 0;
+    alpha4(isnan(alpha4)) = 1e-100;
+    beta4(isnan(beta4)) = 1e-100;
+    y4(isnan(y4)) = 1e-100;
     
     % Calculate sum of square errors
     model4_sum = zeros(68);
     res4 = validation_set_targets(:,:) - (alpha4 + beta4.*validation_set(:,:) + y4.*validation_set(:,:).^2);
     model4_sum = model4_sum + res4.^2;
-    model4_sum(isnan(model4_sum)) = 0; % Set NaN values to zeros again 
-    model4_sum(isinf(model4_sum)) = 0; % Set inifity values to zeros 
+    model4_sum(isnan(model4_sum)) = 1e-100; % Set NaN values to zeros again 
+    model4_sum(isinf(model4_sum)) = 1e-100; % Set inifity values to zeros 
     SSE = sum(sum(model4_sum));
     %disp(SSE);
+
+    % AIC/BIC calculation
+    aic4 = 2*4 + 19.* log(model4_sum./19);
+    bic4 = 4*log(19) + 19.*log(model4_sum./19);
 
     % Save the best model
     if SSE < best_SSE4
@@ -251,12 +271,9 @@ for c = 1:19
         best_alpha4 = alpha4;
         best_beta4 = beta4;
         best_y4 = y4;
-    end
-
-    % AIC/BIC calculation
-    aic4 = 2*4 + 19.* log(model4_sum./19);
-    bic4 = 4*log(19) + 19.*log(model4_sum./19);
-   
+        best_aic4 = mean(mean(aic4));
+        best_bic4 = mean(mean(bic4));
+    end 
 end
 
 
@@ -265,6 +282,8 @@ end
 best_SSE5 = realmax;
 best_alpha5 = zeros(size(s,1), size(s,2));
 best_beta5 = zeros(size(s,1), size(s,2));
+best_aic5 = 0;
+best_bic5 = 0;
 for c = 1:19
     % Split data into training/validation set
     training_set_s = s(:,:,1:size(t,3)~=c);
@@ -295,36 +314,53 @@ for c = 1:19
         
     % There seems to be some NaN values in the alpha3 and beta3 variables,
     % so these need to be set to zero
-    alpha5(isnan(alpha5)) = 0;
-    beta5(isnan(beta5)) = 0;
-    y5(isnan(y5)) = 0;
+    alpha5(isnan(alpha5)) = 1e-100;
+    beta5(isnan(beta5)) = 1e-100;
+    y5(isnan(y5)) = 1e-100;
     
     % Calculate sum of square errors
     model5_sum = zeros(68);
     res5 = validation_set_targets(:,:) - (alpha5 + beta5.*validation_set_s(:,:) + y5.*validation_set_t(:,:));
     model5_sum = model5_sum + res5.^2;
-    model5_sum(isnan(model5_sum)) = 0; % Set NaN values to zeros again 
-    model5_sum(isinf(model5_sum)) = 0; % Set inifity values to zeros 
+    model5_sum(isnan(model5_sum)) = 1e-100; % Set NaN values to zeros again 
+    model5_sum(isinf(model5_sum)) = 1e-100; % Set inifity values to zeros 
     SSE = sum(sum(model5_sum));
     %disp(SSE);
-    
+
+    % AIC/BIC
+    aic5 = 2*4 + 19.* log(model5_sum./19);
+    bic5 = 4*log(19) + 19.*log(model5_sum./19);
+
     % Save the best model
     if SSE < best_SSE5
         best_SSE5 = SSE;
         best_alpha5 = alpha5;
         best_beta5 = beta5;
+        best_aic5 = mean(mean(aic5));
+        best_bic5 = mean(mean(bic5));
     end
-
-    % AIC/BIC
-    aic5 = 2*4 + 19.* log(model5_sum./19);
-    bic5 = 4*log(19) + 19.*log(model5_sum./19);
 end
 
-disp("Model 1 :" + best_SSE1)
-disp("Model 2 :" + best_SSE2)
-disp("Model 3 :" + best_SSE3)
-disp("Model 4 :" + best_SSE4)
-disp("Model 5 :" + best_SSE5)
+disp("Error:")
+disp("  Model 1 :" + best_SSE1)
+disp("  Model 2 :" + best_SSE2)
+disp("  Model 3 :" + best_SSE3)
+disp("  Model 4 :" + best_SSE4)
+disp("  Model 5 :" + best_SSE5)
+
+disp("AIC:")
+disp("  Model 1 :" + best_aic1)
+disp("  Model 2 :" + best_aic2)
+disp("  Model 3 :" + best_aic3)
+disp("  Model 4 :" + best_aic4)
+disp("  Model 5 :" + best_aic5)
+
+disp("BIC:")
+disp("  Model 1 :" + best_bic1)
+disp("  Model 2 :" + best_bic2)
+disp("  Model 3 :" + best_bic3)
+disp("  Model 4 :" + best_bic4)
+disp("  Model 5 :" + best_bic5)
 
 % Plot variance of parameters for the best model (Model 1)
 subplot(2,3,1);
@@ -339,7 +375,7 @@ imshow(mean(all_res1,3) / max(max(mean(all_res1,3))));
 title("Performance");
 
 % Plot variance of parameters for the best model (Model 1)
-subplot(2,3,4);
+subplot(2, 3, 4);
 zoom_start_x = 20;
 zoom_end_x = 30;
 zoom_start_y = 10;

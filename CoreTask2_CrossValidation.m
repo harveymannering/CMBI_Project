@@ -186,14 +186,14 @@ for c = 1:19
     
     % There seems to be some NaN values in the alpha3 and beta3 variables,
     % so these need to be set to zero
-    alpha3(isnan(alpha3)) = 1e-100;
-    beta3(isnan(beta3)) = 1e-100;
+    alpha3(isnan(alpha3)) = 0;
+    beta3(isnan(beta3)) = 0;
 
     % Calculate sum of squares
     model3_sum = zeros(68);
     res3 = validation_set_targets(:,:) - (alpha3 + beta3.*validation_set(:,:));
     model3_sum = model3_sum + res3.^2;
-    model3_sum(isinf(model3_sum)) = 1e-100; % Set inifity values to zeros 
+    model3_sum(isinf(model3_sum)) = 0; % Set inifity values to zeros 
     SSE = sum(sum(model3_sum));
     %disp(SSE);
 
@@ -205,8 +205,8 @@ for c = 1:19
         best_SSE3 = SSE;
         best_alpha3 = alpha3;
         best_beta3 = beta3;
-        best_aic3 = mean(mean(aic3));
-        best_bic3 = mean(mean(bic3));
+        best_aic3 = MeanExcludingInf(aic3);
+        best_bic3 = MeanExcludingInf(bic3);
     end
     
 end
@@ -248,16 +248,16 @@ for c = 1:19
 
     % There seems to be some NaN values in the alpha3 and beta3 variables,
     % so these need to be set to zero
-    alpha4(isnan(alpha4)) = 1e-100;
-    beta4(isnan(beta4)) = 1e-100;
-    y4(isnan(y4)) = 1e-100;
+    alpha4(isnan(alpha4)) = 0;
+    beta4(isnan(beta4)) = 0;
+    y4(isnan(y4)) = 0;
     
     % Calculate sum of square errors
     model4_sum = zeros(68);
     res4 = validation_set_targets(:,:) - (alpha4 + beta4.*validation_set(:,:) + y4.*validation_set(:,:).^2);
     model4_sum = model4_sum + res4.^2;
-    model4_sum(isnan(model4_sum)) = 1e-100; % Set NaN values to zeros again 
-    model4_sum(isinf(model4_sum)) = 1e-100; % Set inifity values to zeros 
+    model4_sum(isnan(model4_sum)) = 0; % Set NaN values to zeros again 
+    model4_sum(isinf(model4_sum)) = 0; % Set inifity values to zeros 
     SSE = sum(sum(model4_sum));
     %disp(SSE);
 
@@ -271,8 +271,8 @@ for c = 1:19
         best_alpha4 = alpha4;
         best_beta4 = beta4;
         best_y4 = y4;
-        best_aic4 = mean(mean(aic4));
-        best_bic4 = mean(mean(bic4));
+        best_aic4 = MeanExcludingInf(aic4);
+        best_bic4 = MeanExcludingInf(bic4);
     end 
 end
 
@@ -314,16 +314,16 @@ for c = 1:19
         
     % There seems to be some NaN values in the alpha3 and beta3 variables,
     % so these need to be set to zero
-    alpha5(isnan(alpha5)) = 1e-100;
-    beta5(isnan(beta5)) = 1e-100;
-    y5(isnan(y5)) = 1e-100;
+    alpha5(isnan(alpha5)) = 0;
+    beta5(isnan(beta5)) = 0;
+    y5(isnan(y5)) = 0;
     
     % Calculate sum of square errors
     model5_sum = zeros(68);
     res5 = validation_set_targets(:,:) - (alpha5 + beta5.*validation_set_s(:,:) + y5.*validation_set_t(:,:));
     model5_sum = model5_sum + res5.^2;
-    model5_sum(isnan(model5_sum)) = 1e-100; % Set NaN values to zeros again 
-    model5_sum(isinf(model5_sum)) = 1e-100; % Set inifity values to zeros 
+    model5_sum(isnan(model5_sum)) = 0; % Set NaN values to zeros again 
+    model5_sum(isinf(model5_sum)) = 0; % Set inifity values to zeros 
     SSE = sum(sum(model5_sum));
     %disp(SSE);
 
@@ -336,8 +336,8 @@ for c = 1:19
         best_SSE5 = SSE;
         best_alpha5 = alpha5;
         best_beta5 = beta5;
-        best_aic5 = mean(mean(aic5));
-        best_bic5 = mean(mean(bic5));
+        best_aic5 = MeanExcludingInf(aic5);
+        best_bic5 = MeanExcludingInf(bic5);
     end
 end
 
@@ -390,5 +390,19 @@ subplot(2,3,6);
 imshow(mean(all_res1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),3) / max(max(mean(all_res1(zoom_start_x:zoom_end_x, zoom_start_y:zoom_end_y,:),3))));
 title("Zoomed Performance");
 
+function m = MeanExcludingInf(matrix)
+    
+    sum = 0;
+    count = 0;
+    for i=1:size(matrix,1)
+        for j=1:size(matrix,2)
+            if isinf(matrix(i,j)) == 0
+                sum = sum + matrix(i,j);
+                count = count + 1;
+            end
+        end
+    end
+    m = sum / count;
+end
 
 

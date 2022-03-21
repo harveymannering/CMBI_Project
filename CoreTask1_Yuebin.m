@@ -111,9 +111,6 @@ for i = 1:8
         graph_metrics(binary_corshrink{i});
 end
 
-display_graphs(cor_density,cor_char_path,cor_efficiency,cor_mean_cluster_coeff ...
-    ,'Lambda','When negative correlations of |0.1| are retained:');
-
 % discarding negative correlations with absolute value greater than 0.1
 for t = 1:8
     corshrink_new = corshrink_matrix{t};
@@ -130,8 +127,10 @@ for i = 1:8
         discard_neg_mean_cluster_coeff(i)] = graph_metrics(discard_neg_corshrink{i});
 end
 
-display_graphs(discard_neg_density,discard_neg_char_path,discard_neg_efficiency, ...
-    discard_neg_mean_cluster_coeff,'Lambda','When negative correlations of |0.1| are discarded:');
+show_difference_graphs(cor_density,discard_neg_density,'edge density');
+show_difference_graphs(cor_char_path,discard_neg_char_path,'mean shortest path');
+show_difference_graphs(cor_efficiency,discard_neg_efficiency,'efficiency');
+show_difference_graphs(cor_mean_cluster_coeff,discard_neg_mean_cluster_coeff,'mean cluster coeff');
 
 % function definition
 % mannually setting lambda
@@ -171,7 +170,7 @@ function xc = makeStdOne(x)
     xc = x ./ sd; 
 end
 
-function display_graphs(density,char_path,efficiency,mean_cluster_coeff,x_label,title_gigure)
+function display_graphs(density,char_path,efficiency,mean_cluster_coeff,x_label,title_figure)
     FA_threshold = [0.1:0.1:0.8];
 
     figure
@@ -182,7 +181,7 @@ function display_graphs(density,char_path,efficiency,mean_cluster_coeff,x_label,
     xlabel(x_label)
     ylabel('Value')
     legend('mean shortest path','efficiency')
-    title(title_gigure)
+    title(title_figure)
 
     figure
     plot(FA_threshold,density)
@@ -191,7 +190,7 @@ function display_graphs(density,char_path,efficiency,mean_cluster_coeff,x_label,
     xlabel(x_label)
     ylabel('Value')
     legend('edge density','mean clustering coefficient')
-    title(title_gigure)
+    title(title_figure)
 end
 
 function [density,char_path,efficiency,mean_cluster_coeff] = graph_metrics(input)
@@ -212,4 +211,19 @@ function [density,char_path,efficiency,mean_cluster_coeff] = graph_metrics(input
     
     % mean clustering coefficient
     mean_cluster_coeff = mean(clustering_coef_bu(input)); 
+end
+
+
+function show_difference_graphs(input1,input2,y_label)
+    threshold = [0.1:0.1:0.8];
+
+    figure
+    hold on 
+    plot(threshold,input1)
+    hold on 
+    plot(threshold,input2)
+    xlabel('Lambda')
+    ylabel(y_label)
+    legend('retain negative correlations','discard negative correlations')
+    title('effects of retaining or discarding negative correlations')
 end

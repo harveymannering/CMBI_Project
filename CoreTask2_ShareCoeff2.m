@@ -391,11 +391,11 @@ var_alpha4 = var(best_alpha4);
 var_alpha5 = var(best_alpha5);
 
 disp("Means alpha:")
-disp("  Model 1 :" + best_alpha1)
-disp("  Model 2 :" + best_alpha2)
-disp("  Model 3 :" + best_alpha3)
-disp("  Model 4 :" + best_alpha4)
-disp("  Model 5 :" + best_alpha5)
+disp("  Model 1 :" + mean_alpha1)
+disp("  Model 2 :" + mean_alpha2)
+disp("  Model 3 :" + mean_alpha3)
+disp("  Model 4 :" + mean_alpha4)
+disp("  Model 5 :" + mean_alpha5)
 
 disp("Variance alpha:");
 disp("  Model 1 :" + var_alpha1)
@@ -418,11 +418,11 @@ var_beta4 = var(best_beta4);
 var_beta5 = var(best_beta5);
 
 disp("Means beta:")
-disp("  Model 1 :" + best_beta1)
-disp("  Model 2 :" + best_beta2)
-disp("  Model 3 :" + best_beta3)
-disp("  Model 4 :" + best_beta4)
-disp("  Model 5 :" + best_beta5)
+disp("  Model 1 :" + mean_beta1)
+disp("  Model 2 :" + mean_beta2)
+disp("  Model 3 :" + mean_beta3)
+disp("  Model 4 :" + mean_beta4)
+disp("  Model 5 :" + mean_beta5)
 
 disp("Variance beta:");
 disp("  Model 1 :" + var_beta1)
